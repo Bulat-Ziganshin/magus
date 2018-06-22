@@ -3,13 +3,13 @@ I thank Eugene Shelwien and Dmitry Bortoq for long discussions regarding these t
 
 # Make assembly magic great again!
 
-Modern optimizing C++ compilers made assembly language almost obsolete. I don't wrote assembly code for 20 years. Neither I see it used anywhere, except in Intel own libraries.
+Modern optimizing C++ compilers almost entirely displaced assembly languages. I don't wrote assembly code for 20 years. Neither I see it used anywhere, except for Intel own libraries.
 
-But C++ optimizers aren't the silver bullet. Each time I write high-optimized algorithm, I go through fight against compilers. I know from the start an assembler code I want to see, but it's hard to force compiler to generate exactly what I need. Modern compilers feel themselves too smart and move code around, allocate registers at their own discretion, and select assembler instructions what they prefer.
+But C++ optimizers aren't the silver bullet. Each time I write high-optimized algorithm, I go through fight against compilers. I know from the start an assembler code I want to see, but it's hard to force compiler to generate exactly what I need. Modern compilers feel themselves so smart and move code around, allocate registers at their own discretion, and select assembler instructions what they prefer.
 
 Nevertheless, I don't write my own asm code for a few reasons:
 - portability: we have to support various CPU architectures (x86, x64, ARM...), object/library formats, calling conventions and name mangling conventions
-- brevity: it may be function with 50 commands, of those only 20 are in main loop. Writing assembler commands is boring by itself, and writing all 50 instructions (while our point of interest is only 20 ones) in low-level way is even more boring
+- brevity: a function may have 50 commands, of those only 20 are in main loop. Writing assembler commands is boring by itself, and writing all 50 instructions (while our point of interest is only 20 ones) in low-level way is even more boring
 
 
 ## Portability
@@ -36,12 +36,37 @@ Various approaches to make assembly code more compact and readable are available
 - complex expressions for assignments and if/while conditions (`if EAX*2 > EBX`)
 - typeful register declarations and endless virtual registers, where extra registers are spilled into stack
 
-PTX is a particularly interesting example of high-level virtual assembly language that allows to declare unlimited amount of typed "registers" and supports legacy ISA instructions by emulating them with command sequences. This allows NVidia to make each next generation of video cards incompatible with previous one, and to adapt to varying amount of registers that depends on compilation options.
+PTX is a particularly interesting example of virtual assembly language that allows to declare unlimited amount of typed "registers" and supports legacy ISA instructions by emulating them with command sequences. This allows NVidia to make each next generation of video cards incompatible with previous one, and to adapt to varying amount of registers that depends on compilation options.
 
 
 ### Sphinx C--
 
+Sphinx C-- is the language providing C-like syntax for assembly code, including computations and if/while statements. The rest is implemented via usual assembly statements. It's close to ideal assembly language I imagined, but unfortunately original program was 16-bit only and various 32/64-bit clones don't took off.
 
+So my first idea was to make open-source implementation of similar language using a modern parsing approach (such as PEG) in a high-level language (probably, Haskell or OCaml)
+
+
+### Turbo: C with benefits
+
+And at this moment I recalled Turbo C - old dumb C compiler that allowed to use register names as variables, f.e. `if (_AX > _BX)  _AX <<= _CL` plus had plain MS-style asm inline statements. These two features made it quite similar to Sphinx C--, but with important benefit - except for these two extensions, it was plain C code. This allowed me to write code switching between portable or low-level, depending on the compiler used:
+
+```C
+#if TURBO_C
+#  define bitbuf _AX
+#  define count  _CL
+#else
+   int bitbuf, count;
+#endif
+
+   bitbuf <<= count;
+```
+
+### New ideal found
+
+At this point I realized that all I need is just C/C++ "with benefits":
+- compiler shouldn't reorder statements
+- support for manual/semi-automatic allocation of registers to variables
+- all asm commands can be generated via intrinsics
 
 
 
