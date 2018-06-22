@@ -41,9 +41,9 @@ PTX is a particularly interesting example of virtual assembly language that allo
 
 ### Sphinx C--
 
-Sphinx C-- is the language providing C-like syntax for assembly code, including computations and if/while statements. The rest is implemented via usual assembly statements. It's close to ideal assembly language I imagined, but unfortunately original program was 16-bit only and various 32/64-bit clones don't took off.
+Sphinx C-- is the language providing C-like syntax for assembly code, including computations and if/while statements. The rest is implemented via usual assembly statements. It looks like ideal high-level assembly language for me, but unfortunately original program was 16-bit only and various 32/64-bit clones don't took off.
 
-So my first idea was to make open-source implementation of similar language using a modern parsing approach (such as PEG) in a high-level language (probably, Haskell or OCaml)
+So my first idea was to make open-source implementation of similar language using a modern parsing approach (such as PEG) in a high-level language (probably, Haskell or OCaml) with massive extensibility features (adding new operators and statements).
 
 
 ### Turbo: C with benefits
@@ -65,10 +65,21 @@ And at this moment I recalled Turbo C - old dumb C compiler that allowed to use 
 
 At this point I realized that all I need is just C/C++ "with benefits":
 - compiler shouldn't reorder statements
-- support for manual/semi-automatic allocation of registers to variables
-- all asm commands can be generated via intrinsics
+- support for manual and semi-automatic assignment of concrete registers to variables - use pragmas ignored by usual C/C++ compilers
+- all asm commands can be generated via intrinsics - provide equivalent implementation in plain C/C++
+
+Similar to Turbo C approach, it will allow to develop plain C/C++ code and debug it using any existing C/C++ compiler. Once the code is working, we can rewrite critical loops to use only low-level operations, directly compilable to single assembly commands. At any moment, it still remains usual C/C++ code whose correctness can be checked with usual C/C++ compiler.
+
+Once transformation is done, we can compile the code with our Magus C++ compiler and get exactly the asm code we developed. On platforms not supported by Magus, the code still can be compiled with usual C/C++ compilers.
+
+This approach will provide us all benefits of Sphinx C-- (i.e. code portability and brevity), plus allow to share the same code between C/C++ (for portability to any system and debugging) and high-level assembler (for performance).
+
+Now, once I figured what to do, I started to research various approaches to C/C++ compiling which can be extended with Magus code generator: LCC, TCC, ANTLR C++ parser, gcc/clang IR transformations. But every approach I was able to find was either pretty hard to learn and implement (such as IR transformations), or has limited usefulness (such as modification of abandoned LCC compiler), so while my goal became perfectly defined, implementation seemed pretty hard.
+
+Another variation of this idea was employing Nim - it allows to transform AST program tree at the compile stage, which is exactly a sort of transformation I'm looking for. So, once algorithm is written as low-level Nim code, it can be translated into C/C++ in usual way, or preprocessed by Magus with inline asm code replacing original statements.
 
 
+### Embedding
 
 
 
