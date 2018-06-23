@@ -15,7 +15,7 @@ Nevertheless, I don't write my own asm code for a few reasons:
 ## Portability
 
 Fortunately, there are various solutions to both classes of problems, in particular for portability:
-- name mangling and object/library formats can be converted by Agner Fog [objconv] utility. It's especially important, since it means that all speed-critical code can be compiled by the same best compiler (GCC) and then linked into other compiler executables!
+- name mangling and object/library formats can be converted by Agner Fog [objconv] utility. It's especially important, since it means that all speed-critical code can be compiled by the same best compiler (GCC) and then linked into executables produced by inferior compilers!
 - calling convention (ABI) portability falls into 3 classes:
   - all x86 code can be made compatible by using `cdecl` declaration
   - x64 Windows compilers have the single ABI
@@ -41,9 +41,9 @@ PTX is a particularly interesting example of virtual assembly language that allo
 
 ### Sphinx C--
 
-Sphinx C-- is the language providing C-like syntax for assembly code, including computations and if/while statements. The rest is implemented via usual assembly statements. It looks like ideal high-level assembly language for me, but unfortunately original program was 16-bit only and various 32/64-bit clones don't took off.
+Sphinx C-- is the language providing C-like syntax for assembly code, including computations and if/while statements. The rest is implemented via usual assembly statements. It looks like ideal high-level assembly language for me, but unfortunately original compiler was 16-bit only and various 32/64-bit clones don't took off.
 
-So my first idea was to make open-source implementation of similar language using a modern parsing approach (such as PEG) in a high-level language (probably, Haskell or OCaml) with massive extensibility features (adding new operators and statements).
+So my first idea was to make open-source implementation of similar language using a modern parsing approach (such as PEG) in a high-level language (probably, Haskell or OCaml) with massive extensibility features (ability to add new operators and statements).
 
 
 ### Turbo: C with benefits
@@ -61,6 +61,9 @@ And at this moment I recalled Turbo C - old dumb C compiler that allowed to use 
    bitbuf <<= count;
 ```
 
+My experience of program optimization using Turbo C was really nice - I started with existing C algorithm and gradually replaced all complex expressions with single-operation assignments, and then added register bindings, similar to the code above, to declarations of hot variables. And the code remained working at each step of this transformation.
+
+
 ### New ideal found
 
 At this point I realized that all I need is just C/C++ "with benefits":
@@ -76,14 +79,16 @@ This approach will provide us all benefits of Sphinx C-- (i.e. code portability 
 
 Now, once I figured what to do, I started to research various approaches to C/C++ compiling which can be extended with Magus code generator: LCC, TCC, ANTLR C++ parser, gcc/clang IR transformations. But every approach I was able to find was either pretty hard to learn and implement (such as IR transformations), or has limited usefulness (such as modification of abandoned LCC compiler), so while my goal became perfectly defined, implementation seemed pretty hard.
 
-Another variation of this idea was employing Nim - it allows to transform AST program tree at the compile stage, which is exactly a sort of transformation I'm looking for. So, once algorithm is written as low-level Nim code, it can be translated into C/C++ in usual way, or preprocessed by Magus with inline asm code replacing original statements.
+Another variation of this idea was employing Nim - it allows to transform code AST at the compile time, which is exactly a kind of transformation I'm looking for. So, once algorithm was developed as low-level Nim code, it can be translated into C/C++ in usual way, or preprocessed by Magus replacing original statements with inline asm code.
 
 
 ### Embedding
 
+And at this point of discussion Eugene added two great ideas to the plan:
+- we don't need to produce asm code directly, instead we can generate gcc inline `asm` statements, which then can be compiled by any major C/C++ compiler (except for MSVC)
+- we don't need to parse and process entire input file, instead we can translate only specifically marked regions. This makes principal difference, freeing us from burden of full C++ language support. Instead, we need to support only language subset used in the statements, and moreover - only part of the whole statement syntax that we find really useful for this type of HPC computing. And even this small C subset can be implemented incrementally if we will start with support for generic `asm` statement.
 
-
-
+Being combined, these ideas allow us to quickly develop minimal practical translator.
 
 
 
