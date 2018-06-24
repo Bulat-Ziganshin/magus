@@ -95,24 +95,22 @@ And combination of these ideas is absolute win, allowing us to quickly develop m
 
 ### Implementation
 
-Magus inputs a sequence of GCC C statements and outputs compound GCC C statement that includes GCC-style asm statements.
-All identifiers are translated as register names, i.e. `EAX` -> `%%EAX`.
-All function calls are translated as asm commands, i.e. `CRC32(EAX,1)` -> `CRC32 1, %%EAX` and `EBX = CRC32(EAX,1)` -> `MOV %%EAX, %%EBX; CRC32 1, %%EBX`.
-
 Implementation plan is:
-[ ] employ C-language statement parser
-[ ] map `ax += bx` to inline asm code
-[ ] `ax = bx+cx`
-[ ] `goto lbl; lbl:`
-[ ] `if (CF)  goto lbl`
-[ ] `if (ax < bx)  goto lbl`
-[ ] `{}`
-[ ] `if {}`
-[ ] `while`
-[ ] `for`
-[ ] intrinsics
-[ ] manual and semi-automatic register allocation
-[ ] complex expressions, and allocation of temporary registers to handle that
+- [ ] Magus inputs a sequence of GCC C statements and outputs compound GCC C statement that includes GCC-style asm statements.
+- [ ] all identifiers are translated as register names, i.e. `EAX` -> `%%EAX`.
+- [ ] all function calls are translated as asm commands with the same name, i.e. `CRC32(EAX,1)` -> `CRC32 1, %%EAX` and `EBX = CRC32(EAX,1)` -> `MOV %%EAX, %%EBX; CRC32 1, %%EBX`.
+- [ ] map `ax += bx` to inline asm code
+- [ ] `ax = bx+cx`
+- [ ] `goto lbl; lbl:`
+- [ ] `if (CF)  goto lbl`
+- [ ] `if (ax < bx)  goto lbl`
+- [ ] `{}`
+- [ ] `if {}`
+- [ ] `while`
+- [ ] `for`
+- [ ] gcc-compatible intrinsic set
+- [ ] manual and semi-automatic register allocation
+- [ ] complex expressions, and allocation of temporary registers to handle that
 
 
 
