@@ -97,8 +97,8 @@ And combination of these ideas is absolute win, allowing us to quickly develop m
 
 Implementation plan is:
 - [x] Magus inputs a sequence of GCC C statements and outputs compound GCC C statement that includes GCC-style asm statements.
-- [ ] all identifiers are translated as register names, i.e. `EAX` -> `%%EAX`.
-- [ ] all function calls are translated as asm commands with the same name, i.e. `CRC32(EAX,1)` -> `CRC32 1, %%EAX` and `EBX = CRC32(EAX,1)` -> `MOV %%EAX, %%EBX; CRC32 1, %%EBX`.
+- [x] all identifiers are translated as register names, i.e. `EAX` -> `%%EAX`.
+- [x] all function calls are translated as asm commands with the same name, i.e. `CRC32(EAX,1)` -> `CRC32 1, %%EAX` and `EBX = CRC32(EAX,1)` -> `MOV %%EAX, %%EBX; CRC32 1, %%EBX`.
 - [ ] map `ax += bx` to inline asm code
 - [ ] `ax = bx+cx`
 - [ ] `goto lbl; lbl:`

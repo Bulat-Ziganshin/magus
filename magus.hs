@@ -6,11 +6,14 @@ import System.IO
 import Control.Monad
 import Text.PrettyPrint.HughesPJ
 import qualified Data.ByteString as BS
+import Data.List
 
 import Language.C              -- simple API
 import Language.C.System.GCC   -- preprocessor used
 import Language.C.System.Preprocess
 import Language.C.Data.Name
+import Language.C.Syntax.Utils
+import Language.C.Data.Ident
 
 -------------------------------------------------------------------------------------------------------------------------------------
 
@@ -39,6 +42,12 @@ parseCStatements input initialPosition =
     where inputStatement  =  (mapBS "{ ") `BS.append` input `BS.append` (mapBS " }")
           mapBS = BS.pack . map (toEnum.fromEnum)
 
+writeAST ast = do
+    -- dump AST
+    putStrLn $ (decorate (shows (fmap (const ShowPlaceholder) ast)) "")
+    -- pretty print
+    print $ pretty ast
+
 main :: IO ()
 main = do
     let usageErr = (hPutStrLn stderr (usageMsg "./magus") >> exitWith (ExitFailure 1))
@@ -53,8 +62,29 @@ main = do
     ast <- errorOnLeft "Parse Error:" $
         parseCStatements input_stream (initPos input_file)
 
-    -- dump AST
-    putStrLn $ (decorate (shows (fmap (const ShowPlaceholder) ast)) "")
+    putStrLn "------------------- original:"
+    writeAST ast
+    putStrLn "------------------- transpiled:"
+    writeAST (transpile ast)
 
-    -- pretty print
-    print $ pretty ast
+
+transpile = mapSubStmts (const False) $ \stat -> case stat of
+    CExpr (Just expr) ctx
+        | Just asm <- mapExpr expr
+        -> CAsm (CAsmStmt Nothing (CStrLit (CString asm False) ctx) [] [] [] ctx) ctx
+    _ -> stat
+
+
+mapExpr (CCall (CVar (Ident func id a0) a1) params a2) =
+    Just$ func++mapParams params
+--    CCall (CVar (Ident ("__"++name) id a0) a1) params a2
+mapExpr _ = Nothing
+
+
+mapParams [] = ""
+mapParams (x:xs) = (" "++)$ intercalate ", "$ map mapParam (xs++[x])
+
+
+mapParam (CVar (Ident name id a0) a1)    = "%%"++name
+mapParam (CConst (CIntConst num a0))     = "$"++show num
+
